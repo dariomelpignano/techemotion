@@ -1,0 +1,262 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TECH.EMOTION SUMMIT 2025 - built with ❤️ by Neosperience</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    h1 {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .error-message {
+      color: #d9534f;
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #d9534f;
+      border-radius: 5px;
+      display: none;
+    }
+    .instructions {
+      max-width: 600px;
+      margin: 20px auto;
+      text-align: center;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <h1>MAG Sales Assistant v0.1</h1>
+  
+  <p class="instructions">
+    Our AI assistant is ready to help you. Click the chat icon in the bottom right corner to start a conversation.
+    If you encounter any issues, please refresh the page or try again later.
+  </p>
+  
+  <div id="error-message" class="error-message">
+    There was an issue starting the conversation. Please check your agent ID and configuration.
+  </div>
+
+  <!-- Elevenlabs Convai Widget with additional attributes -->
+  <elevenlabs-convai 
+    agent-id="agent_01jw8387m9e74t2xd5p9vaff30"
+    position="bottom-right"
+    mode="expanded"
+    welcome-message="Hello! How can I assist you today?">
+  </elevenlabs-convai>
+
+  <!-- Script with error handling and to hide only the powered by text -->
+  <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+  <script>
+    // Function to hide only the ElevenLabs footer text (CSS and JS parts)
+    function hideElevenLabsFooterText() {
+      const widget = document.querySelector('elevenlabs-convai');
+      if (widget && widget.shadowRoot) {
+        // Ensure style is injected only once
+        if (!widget.shadowRoot.querySelector('#elevenlabs-hide-style')) {
+          const style = document.createElement('style');
+          style.id = 'elevenlabs-hide-style'; // Add an ID for the check
+          style.textContent = `
+            /* Target the main branding div using class name patterns */
+            div[class^="_poweredBy_"],
+            div[class*="poweredBy"],
+
+            /* Hide the link specifically */
+            a[href*="elevenlabs"] {
+              display: none !important;
+            }
+
+            /* 
+              The following :has() selectors are generally unreliable 
+              and have been commented out or removed.
+              The class-based selectors and direct href selector above are preferred.
+            */
+          `;
+          widget.shadowRoot.appendChild(style);
+        }
+        
+        // Define and call the function that tries to hide specific elements via JS
+        const findAndHideFooterText = () => {
+            const widgetInstance = document.querySelector('elevenlabs-convai'); // Re-query to ensure freshness if needed
+            if (!widgetInstance || !widgetInstance.shadowRoot) return;
+
+            // Function to check if an element contains the text
+            const containsElevenLabsText = (element) => {
+              return element.textContent && (
+                element.textContent.includes("Powered by ElevenLabs Conversational AI") || // Added full phrase
+                element.textContent.includes("Powered by ElevenLabs") || 
+                element.textContent.includes("ElevenLabs") ||
+                element.textContent.includes("Conversational AI")
+              );
+            };
+            
+            // Function to process shadow DOM
+            const processShadowDOM = (currentRoot) => {
+              if (!currentRoot) return;
+              
+              // 1. Process text nodes (existing logic, with refined parent climbing)
+              const walker = document.createTreeWalker(
+                currentRoot, 
+                NodeFilter.SHOW_TEXT, 
+                null, 
+                false
+              );
+              
+              const textNodes = [];
+              let node;
+              while (node = walker.nextNode()) {
+                textNodes.push(node);
+              }
+              
+              textNodes.forEach(textNode => {
+                if (
+                  textNode.textContent && (
+                    textNode.textContent.includes("Powered by ElevenLabs Conversational AI") ||
+                    textNode.textContent.includes("Powered by ElevenLabs") ||
+                    textNode.textContent.includes("ElevenLabs") ||
+                    textNode.textContent.includes("Conversational AI")
+                  )
+                ) {
+                  let parent = textNode.parentElement;
+                  let attempts = 0;
+                  // Climb up, trying to find a more substantial parent
+                  while (parent && parent !== currentRoot && parent.tagName !== 'BODY' && parent.tagName !== 'HTML' && attempts < 5) {
+                    const parentText = parent.textContent || "";
+                    // If parent mostly just contains the branding text or is a simple wrapper, go higher
+                    if (parent.childNodes.length <= 2 || parentText.trim() === textNode.textContent.trim() || ['SPAN', 'EM', 'STRONG', 'A', 'FONT', 'I', 'B', 'U'].includes(parent.tagName)) {
+                        if (parent.parentElement && parent.parentElement !== currentRoot) {
+                            parent = parent.parentElement;
+                        } else {
+                            break; // Stop if next parent is the root or null
+                        }
+                    } else {
+                        break; // Found a more complex parent
+                    }
+                    attempts++;
+                  }
+                  
+                  if (parent && parent !== currentRoot) {
+                    parent.style.setProperty("display", "none", "important");
+                  } else {
+                    textNode.textContent = ""; // Fallback: clear the text
+                  }
+                }
+              });
+
+              // 2. Process anchor tags pointing to ElevenLabs (existing logic)
+              const links = currentRoot.querySelectorAll('a[href*="elevenlabs"]');
+              links.forEach(link => {
+                let parentToHide = link.parentElement;
+                let levels = 0;
+                while (parentToHide && parentToHide !== currentRoot && levels < 3) {
+                  if (parentToHide.tagName === 'P' || parentToHide.tagName === 'DIV' || parentToHide.tagName === 'SPAN') {
+                     break; 
+                  }
+                  if (!parentToHide.parentElement || parentToHide.parentElement === currentRoot) {
+                      break;
+                  }
+                  parentToHide = parentToHide.parentElement;
+                  levels++;
+                }
+
+                if (parentToHide && parentToHide !== currentRoot) {
+                  const parentTextContent = parentToHide.textContent || "";
+                  if (parentTextContent.includes("Powered by") || parentTextContent.includes("ElevenLabs") || parentTextContent.includes("Conversational AI")) {
+                       parentToHide.style.setProperty("display", "none", "important");
+                  } else {
+                      if (link.parentElement && link.parentElement !== currentRoot){
+                          link.parentElement.style.setProperty("display", "none", "important");
+                      } else {
+                          link.style.setProperty("display", "none", "important");
+                      }
+                  }
+                } else if (link.parentElement && link.parentElement !== currentRoot) {
+                    link.parentElement.style.setProperty("display", "none", "important");
+                } else {
+                    link.style.setProperty("display", "none", "important");
+                }
+              });
+              
+              // 3. Process nested shadow roots (existing logic, uses currentRoot)
+              const elementsWithShadowRoots = currentRoot.querySelectorAll('*');
+              elementsWithShadowRoots.forEach(el => {
+                if (el.shadowRoot) {
+                  processShadowDOM(el.shadowRoot); // Recursive call
+                }
+              });
+
+              // 4. Process iframes *within the currentRoot* (Corrected Logic)
+              const iframesInCurrentRoot = currentRoot.querySelectorAll('iframe');
+              iframesInCurrentRoot.forEach(iframe => {
+                try {
+                  // Check if iframe is loaded and accessible
+                  if (iframe.contentDocument && iframe.contentDocument.body) {
+                    processShadowDOM(iframe.contentDocument.body); // Process the body of the iframe
+                  }
+                } catch (e) {
+                  // console.warn("Could not access iframe content:", e); // Optional: for debugging CORS issues
+                }
+              });
+            };
+            
+            // Process the widget's main shadow DOM
+            processShadowDOM(widgetInstance.shadowRoot);
+            
+            // REMOVED: The global iframe search here, as it's now handled recursively starting from widget's shadow DOM
+            // const iframes = document.querySelectorAll('iframe');
+            // iframes.forEach(iframe => { ... });
+          };
+
+        findAndHideFooterText(); // Call it once. The MutationObserver will handle subsequent changes.
+      }
+    }
+
+    // Set up a MutationObserver to watch for changes and reapply our hiding
+    const observer = new MutationObserver(function(mutations) {
+      hideElevenLabsFooterText();
+    });
+
+    // Function to repeatedly try hiding the text until successful or timeout
+    function attemptToHideOnLoad() {
+      const widget = document.querySelector('elevenlabs-convai');
+      if (widget && widget.shadowRoot) {
+        hideElevenLabsFooterText(); // Apply hiding logic
+        // Start observing for dynamic changes *after* initial attempt and shadow DOM confirmation
+        observer.observe(document.body, { 
+          childList: true, 
+          subtree: true 
+        });
+      } else {
+        // If shadowRoot is not ready, try again shortly.
+        setTimeout(attemptToHideOnLoad, 50); // Poll every 50ms
+      }
+    }
+
+    window.addEventListener('load', function() {
+      // This timeout is for checking if the widget itself failed to load its shadow DOM
+      setTimeout(function() {
+        const widget = document.querySelector('elevenlabs-convai');
+        if (widget && !widget.shadowRoot) { // If widget exists but shadowRoot never appeared after some time
+          document.getElementById('error-message').style.display = 'block';
+        }
+      }, 1500); // Check after 1.5 seconds
+
+      // Start the process of trying to hide the footer text.
+      attemptToHideOnLoad();
+    });
+  </script>
+</body>
+</html>
