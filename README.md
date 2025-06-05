@@ -1,3 +1,14 @@
+---
+title: Tech.Emotion Summit 2025 Virtual Assistant
+emoji: 🤖
+colorFrom: blue
+colorTo: cyan
+sdk: gradio
+sdk_version: 5.*
+app_file: app.py
+pinned: false
+---
+
 # Tech.Emotion Summit 2025 Virtual Assistant
 
 A virtual assistant built for the Tech.Emotion Summit 2025, powered by OpenAI and LangChain.
