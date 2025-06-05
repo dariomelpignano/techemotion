@@ -2,9 +2,9 @@
 title: Tech.Emotion Summit 2025 Virtual Assistant
 emoji: 🤖
 colorFrom: blue
-colorTo: cyan
+colorTo: blue
 sdk: gradio
-sdk_version: 5.*
+sdk_version: 4.29.0
 app_file: app.py
 pinned: false
 ---
